@@ -2,33 +2,49 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'yourdockerhubusername/my-web-app'
+        // Your Docker Hub image name
+        IMAGE_NAME = 'sahanadocker10/mywebapp'
     }
 
     stages {
-        stage('Clone Repo') {
+        stage('Clone GitHub Repository') {
             steps {
-                git 'https://github.com/YOUR_GITHUB_USERNAME/my-web-app.git'
+                // Pulls code from your GitHub repo
+                git 'https://github.com/Sahana1110/mywebapp.git'
             }
         }
 
-        stage('Build Image') {
+        stage('Build Docker Image') {
             steps {
+                // Builds Docker image from Dockerfile in repo
                 sh 'docker build -t $IMAGE_NAME .'
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Push Image to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
-                    sh 'docker push $IMAGE_NAME'
+                // Authenticates and pushes image to Docker Hub
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    sh '''
+                        echo $PASSWORD | docker login -u $USERNAME --password-stdin
+                        docker push $IMAGE_NAME
+                    '''
                 }
             }
         }
 
-        stage('Run Container') {
+        stage('Stop Old Containers') {
             steps {
+                // Stops any running containers with the same image
+                sh '''
+                    docker ps -q --filter ancestor=$IMAGE_NAME | xargs -r docker stop
+                '''
+            }
+        }
+
+        stage('Run Docker Container') {
+            steps {
+                // Runs container on port 8080 (accessible in browser)
                 sh 'docker run -d -p 8080:80 $IMAGE_NAME'
             }
         }
