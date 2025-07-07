@@ -45,7 +45,7 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 // Runs container on port 8080 (accessible in browser)
-                sh 'docker run -d -p 8080:80 $IMAGE_NAME'
+                sh 'docker run -d -p 8081:80 $IMAGE_NAME'
             }
         }
     }
