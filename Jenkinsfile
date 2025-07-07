@@ -39,7 +39,13 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                sh 'docker run -d -p 8081:80 $IMAGE_NAME'
+                sh '''
+                    # Stop and remove any container using port 8081
+                    docker ps --filter "publish=8081" -q | xargs -r docker rm -f
+
+                    # Run the new container
+                    docker run -d -p 8081:80 $IMAGE_NAME
+                '''
             }
         }
     }
