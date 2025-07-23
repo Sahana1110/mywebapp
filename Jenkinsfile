@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = 'sahanadocker10/mywebapp:latest'
+        KUBECONFIG = '/var/lib/jenkins/.kube/config'  // Adjust if your kube config is elsewhere
     }
 
     stages {
@@ -29,18 +30,37 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Update Kubernetes YAMLs') {
             steps {
-                sh '''
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
-                '''
+                script {
+                    // Replace old image in deployment.yaml with new Docker image
+                    sh '''
+                        sed -i "s|image: .*|image: ${IMAGE_NAME}|g" deployment.yaml
+                    '''
+                }
             }
         }
 
-        stage('Verify Kubernetes Deployment') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl get all'
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_PATH')]) {
+                    sh '''
+                        export KUBECONFIG=$KUBECONFIG_PATH
+                        kubectl apply -f deployment.yaml
+                        kubectl apply -f service.yaml
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_PATH')]) {
+                    sh '''
+                        export KUBECONFIG=$KUBECONFIG_PATH
+                        kubectl get pods -o wide
+                    '''
+                }
             }
         }
     }
