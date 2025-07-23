@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'sahanadocker10/mywebapp'
+        IMAGE_NAME = 'sahanadocker10/mywebapp:latest'
     }
 
     stages {
@@ -38,11 +38,10 @@ pipeline {
             }
         }
 
-        stage('Verify Deployment in Kubernetes') {
+        stage('Verify Kubernetes Deployment') {
             steps {
                 sh 'kubectl get all'
             }
         }
     }
 }
-
