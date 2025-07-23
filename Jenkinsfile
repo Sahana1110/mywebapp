@@ -29,23 +29,18 @@ pipeline {
             }
         }
 
-        stage('Stop Old Containers') {
+        stage('Deploy to Kubernetes') {
             steps {
                 sh '''
-                    docker ps -q --filter ancestor=$IMAGE_NAME | xargs -r docker stop
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
                 '''
             }
         }
 
-        stage('Run Docker Container') {
+        stage('Verify Deployment in Kubernetes') {
             steps {
-                sh '''
-                    # Stop and remove any container using port 8081
-                    docker ps --filter "publish=8081" -q | xargs -r docker rm -f
-
-                    # Run the new container
-                    docker run -d -p 8081:80 $IMAGE_NAME
-                '''
+                sh 'kubectl get all'
             }
         }
     }
